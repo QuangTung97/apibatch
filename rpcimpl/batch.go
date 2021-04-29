@@ -123,17 +123,25 @@ ON DUPLICATE KEY UPDATE val = val + VALUES(val)
 	}
 }
 
-func transact(db *sqlx.DB, fn func(tx *sqlx.Tx) error) error {
-	tx, err := db.Beginx()
+func transact(db *sqlx.DB, fn func(tx *sqlx.Tx) error) (err error) {
+	var tx *sqlx.Tx
+	tx, err = db.Beginx()
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if p := recover(); p != nil {
+			_ = tx.Rollback()
+			panic(p) // re-throw panic after rollback
+		} else if err != nil {
+			_ = tx.Rollback() // keep the err
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
 	err = fn(tx)
-	if err != nil {
-		_ = tx.Rollback()
-		return err
-	}
-	return tx.Commit()
+	return
 }
 
 func (s *BatchServer) doInBackgroundWithTransaction(ch <-chan Request) {
