@@ -1,4 +1,4 @@
-.PHONY: all lint install-tools generate
+.PHONY: all format lint install-tools generate
 
 RPC_DIR := rpc
 
@@ -6,23 +6,27 @@ CURRENT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 define generate
 	mkdir -p rpc/$(1) && \
-		cd proto/$(1) && \
+		cd proto/$(2) && \
 		protoc -I.:${CURRENT_DIR}/proto \
 			--go_out=paths=source_relative:${CURRENT_DIR}/rpc/$(1) \
 			--go-grpc_out=paths=source_relative:${CURRENT_DIR}/rpc/$(1) \
 			--grpc-gateway_out=logtostderr=true,paths=source_relative:${CURRENT_DIR}/rpc/$(1) \
-			$(2)
+			$(3)
 endef
 
 all:
-	go build -o main cmd/main.go
+	go build -o main cmd/server/main.go
+
+format:
+	go fmt ./...
+	cd proto && prototool format -w
 
 lint:
-	go fmt ./...
 	golint ./...
 	go vet ./...
 	errcheck ./...
 	gocyclo -over 10 .
+	cd proto && prototool lint
 
 install-tools:
 	go install github.com/fzipp/gocyclo
@@ -41,4 +45,4 @@ proto/google/api/httpbody.proto:
 
 generate: proto/google/api/httpbody.proto
 	rm -rf rpc
-	$(call generate,batchrpc/,batch.proto)
+	$(call generate,batchpb/,batch,batch.proto)

@@ -2,12 +2,12 @@ syntax = "proto3";
 
 package batch;
 
-option go_package = "apibatching/rpc/batchrpc;batchrpc";
+option go_package = "rpc/batchpb;batchpb";
 
 import "google/api/annotations.proto";
 
 service BatchService {
-  rpc Inc (IncRequest) returns (IncResponse) {
+  rpc Inc(IncRequest) returns (IncResponse) {
     option (google.api.http) = {
       post: "/api/inc"
       body: "*"
@@ -20,5 +20,4 @@ message IncRequest {
   uint64 value = 2;
 }
 
-message IncResponse {
-}
+message IncResponse {}
