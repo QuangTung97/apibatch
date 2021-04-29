@@ -31,7 +31,7 @@ func NewBatchServer(db *sqlx.DB) *BatchServer {
 		db: db,
 	}
 	go func() {
-		s.doInBackground(ch)
+		s.doInBackgroundWithTransaction(ch)
 	}()
 	return s
 }
@@ -110,6 +110,87 @@ ON DUPLICATE KEY UPDATE val = val + VALUES(val)
 `
 		query = fmt.Sprintf(query, buf.String())
 		_, err := s.db.Exec(query, args...)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, req := range requests {
+			req.WaitCh <- struct{}{}
+			req.WaitCh = nil
+		}
+
+		requests = requests[:0]
+	}
+}
+
+func transact(db *sqlx.DB, fn func(tx *sqlx.Tx) error) error {
+	tx, err := db.Beginx()
+	if err != nil {
+		return err
+	}
+	err = fn(tx)
+	if err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	return tx.Commit()
+}
+
+func (s *BatchServer) doInBackgroundWithTransaction(ch <-chan Request) {
+	requests := make([]Request, 0, 1000)
+	for {
+		first := <-ch
+		requests = append(requests, first)
+
+	BatchLoop:
+		for i := 1; i < 1000; i++ {
+			select {
+			case req := <-ch:
+				requests = append(requests, req)
+			default:
+				break BatchLoop
+			}
+		}
+
+		values := map[uint64]uint64{}
+		for _, req := range requests {
+			values[req.ID] += req.Value
+		}
+
+		args := make([]interface{}, 0, 2*len(values))
+		inArgs := make([]interface{}, 0, len(values))
+		for key, value := range values {
+			args = append(args, key, value)
+			inArgs = append(inArgs, key)
+		}
+
+		err := transact(s.db, func(tx *sqlx.Tx) error {
+			selectQuery := `SELECT id, val FROM counters WHERE id IN (?) FOR UPDATE`
+			selectQuery, inArgs, err := sqlx.In(selectQuery, inArgs)
+			if err != nil {
+				return err
+			}
+			fmt.Println(selectQuery, inArgs)
+
+			var buf bytes.Buffer
+			buf.WriteString("(?, ?)")
+			for i := 0; i < len(values)-1; i++ {
+				buf.WriteString(",(?, ?)")
+			}
+			fmt.Println("BATCH:", values)
+
+			query := `
+INSERT INTO counters (id, val)
+VALUES %s
+ON DUPLICATE KEY UPDATE val = val + VALUES(val)
+`
+			query = fmt.Sprintf(query, buf.String())
+			_, err = s.db.Exec(query, args...)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
 		if err != nil {
 			panic(err)
 		}

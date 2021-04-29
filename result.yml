@@ -23,3 +23,7 @@ full-batching:
     - 10000 Inc, 100 threads -> 1.906629418s
     - 10000 Inc, 100 threads -> 1.875841877s
     - 10000 Inc, 100 threads -> 1.723697898s
+
+txn-batching:
+  concurrent:
+    - 10000 Inc, 100 threads -> 1.736701779s
