@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package batch;
+
+option go_package = "apibatching/rpc/batchrpc;batchrpc";
+
+import "google/api/annotations.proto";
+
+service BatchService {
+  rpc Inc (IncRequest) returns (IncResponse) {
+    option (google.api.http) = {
+      post: "/api/inc"
+      body: "*"
+    };
+  }
+}
+
+message IncRequest {
+  uint64 id = 1;
+  uint64 value = 2;
+}
+
+message IncResponse {
+}
