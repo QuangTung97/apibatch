@@ -21,6 +21,10 @@ func NewBatchServer(db *sqlx.DB) *BatchServer {
 
 // Inc ...
 func (s *BatchServer) Inc(ctx context.Context, req *batchpb.IncRequest) (*batchpb.IncResponse, error) {
+	return s.incWithoutBatching(ctx, req)
+}
+
+func (s *BatchServer) incWithoutBatching(ctx context.Context, req *batchpb.IncRequest) (*batchpb.IncResponse, error) {
 	query := `
 INSERT INTO counters (id, val)
 VALUES (?, ?)
