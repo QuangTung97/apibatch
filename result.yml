@@ -3,5 +3,23 @@ no_batching:
     - 1000 Inc -> 9.280930555s
     - 1000 Inc -> 8.98193265s
   concurrent:
-    - 1000 Inc -> 6.793201616s
-    - 1000 Inc -> 7.003307187s
+    - 1000 Inc, 10 threads -> 6.793201616s
+    - 1000 Inc, 10 threads -> 7.003307187s
+
+partial-batching:
+  concurrent:
+    - 1000 Inc, 10 threads -> 1.880864128s
+    - 1000 Inc, 10 threads -> 1.70837071s
+    - 1000 Inc, 50 threads -> 394.897401ms
+    - 1000 Inc, 50 threads -> 446.480494ms
+    - 1000 Inc, 50 threads -> 366.569767ms
+
+full-batching:
+  concurrent:
+    - 1000 Inc, 50 threads -> 321.446064ms
+    - 1000 Inc, 50 threads -> 320.048761ms
+    - 1000 Inc, 50 threads -> 336.829149ms
+    - 10000 Inc, 100 threads -> 1.625037842s
+    - 10000 Inc, 100 threads -> 1.906629418s
+    - 10000 Inc, 100 threads -> 1.875841877s
+    - 10000 Inc, 100 threads -> 1.723697898s

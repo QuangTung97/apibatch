@@ -65,9 +65,9 @@ func callConcurrent(conn *grpc.ClientConn) {
 
 	client := batchpb.NewBatchServiceClient(conn)
 	Concurrent(ConcurrentConfig{
-		ElementCount: 1000,
-		ThreadCount:  10,
-		Spacing:      100,
+		ElementCount: 10000,
+		ThreadCount:  100,
+		Spacing:      1000,
 	}, func(i int) {
 		_, err := client.Inc(context.Background(), &batchpb.IncRequest{
 			Id:    100,
