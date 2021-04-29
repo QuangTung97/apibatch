@@ -1,7 +1,5 @@
 .PHONY: all format lint install-tools generate
 
-RPC_DIR := rpc
-
 CURRENT_DIR := $(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
 define generate
@@ -16,6 +14,7 @@ endef
 
 all:
 	go build -o main cmd/server/main.go
+	go build -o client cmd/client/main.go
 
 format:
 	go fmt ./...

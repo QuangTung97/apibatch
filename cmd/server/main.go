@@ -23,8 +23,8 @@ func main() {
 	runGRPCAndHTTPServers(server)
 }
 
-func registerGateway(ctx context.Context, mux *runtime.ServeMux, opts []grpc.DialOption) {
-	err := batchpb.RegisterBatchServiceHandlerFromEndpoint(ctx, mux, "localhost:9000", opts)
+func registerGateway(ctx context.Context, mux *runtime.ServeMux, endpoint string, opts []grpc.DialOption) {
+	err := batchpb.RegisterBatchServiceHandlerFromEndpoint(ctx, mux, endpoint, opts)
 	if err != nil {
 		panic(err)
 	}
@@ -42,7 +42,7 @@ func runGRPCAndHTTPServers(server *grpc.Server) {
 	ctx := context.Background()
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	registerGateway(ctx, mux, opts)
+	registerGateway(ctx, mux, "localhost:9000", opts)
 
 	http.Handle("/api/", mux)
 	httpServer := http.Server{
