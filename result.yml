@@ -1,0 +1,4 @@
+no_batching:
+  single_thread:
+    - 1000 Inc -> 9.280930555s
+    - 1000 Inc -> 8.98193265s

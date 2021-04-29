@@ -5,7 +5,9 @@ import (
 	"apibatch/rpcimpl"
 	"context"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/jmoiron/sqlx"
 	"google.golang.org/grpc"
 	"net"
 	"net/http"
@@ -17,7 +19,9 @@ import (
 
 func main() {
 	server := grpc.NewServer()
-	s := rpcimpl.NewBatchServer()
+	db := sqlx.MustConnect("mysql", "root:1@tcp(localhost:3306)/bench?parseTime=true")
+
+	s := rpcimpl.NewBatchServer(db)
 	batchpb.RegisterBatchServiceServer(server, s)
 
 	runGRPCAndHTTPServers(server)
@@ -34,7 +38,7 @@ func runGRPCAndHTTPServers(server *grpc.Server) {
 	exit := make(chan os.Signal, 1)
 	signal.Notify(exit, os.Interrupt, os.Kill)
 
-	listener, err := net.Listen("tcp", ":9000")
+	listener, err := net.Listen("tcp", ":6000")
 	if err != nil {
 		panic(err)
 	}
@@ -42,11 +46,11 @@ func runGRPCAndHTTPServers(server *grpc.Server) {
 	ctx := context.Background()
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
-	registerGateway(ctx, mux, "localhost:9000", opts)
+	registerGateway(ctx, mux, "localhost:6000", opts)
 
 	http.Handle("/api/", mux)
 	httpServer := http.Server{
-		Addr: ":9080",
+		Addr: ":6080",
 	}
 
 	var wg sync.WaitGroup
